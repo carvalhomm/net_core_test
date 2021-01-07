@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System;
-namespace DatabaseIntegration.Models {
+namespace Movies.Models {
     public class Movie {
 
         public string Id { get; set; }
