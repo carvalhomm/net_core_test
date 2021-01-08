@@ -23,6 +23,7 @@ namespace DatabaseIntegration.Controllers {
         [HttpGet("getMovies")]
         public async Task<List<Movie>> Get([FromQuery(Name = "id")] string id, [FromQuery(Name = "name")] string name, [FromQuery(Name = "category")] string category) {
             Movie movie = new Movie();
+            Console.WriteLine("CHEGOU AQUI");
             bool canSend = false;
             if (!String.IsNullOrEmpty(id)) {
                 movie.Id = id;
@@ -34,8 +35,14 @@ namespace DatabaseIntegration.Controllers {
                 movie.Categories.Add(category);
                 canSend = true;
             }
+                Console.WriteLine("canSend --> ", canSend);
             if (canSend) {
                 this.Messager.sendMessage("get", movie);
+                IDisposable moviesSubs = this.Messager.ObservableList.Subscribe(movies => {
+                    Console.WriteLine("chegou movie return get --> ", movie);
+                });
+                Console.WriteLine("movie subs --> ", moviesSubs);
+                // return moviesSubs;
                 return new List<Movie>();
             } else {
                 return new List<Movie>();

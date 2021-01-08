@@ -16,7 +16,7 @@ namespace DatabaseIntegration.Services {
             _logger = logger;
         }
 
-        public async List<Movie> Get([FromQuery(Name = "id")] string id, [FromQuery(Name = "name")] string name, [FromQuery(Name = "category")] string category) {
+        public List<Movie> Get([FromQuery(Name = "id")] string id, [FromQuery(Name = "name")] string name, [FromQuery(Name = "category")] string category) {
             List<Movie> listMovies = new List<Movie>();
             var movies = from movie in this.MovieContext.Movie select movie;
             if (!String.IsNullOrEmpty(id)) {

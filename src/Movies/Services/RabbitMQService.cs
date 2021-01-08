@@ -10,6 +10,7 @@ namespace Movies.Services {
     public class RabbitMQService {
         private IModel Channel;
         public Subject<Movie> Observable;
+        public Subject<List<Movie>> ObservableList;
         public RabbitMQService() {
             var factory = new ConnectionFactory() { HostName = "localhost" };
             var connection = factory.CreateConnection();
@@ -54,8 +55,9 @@ namespace Movies.Services {
         }
 
         public void listenToChannelPost() {
-            var consumer = new EventingBasicConsumer(this.Channel);
-            consumer.Received += (model, ea) => {
+            var consumerPost = new EventingBasicConsumer(this.Channel);
+            var consumerGet = new EventingBasicConsumer(this.Channel);
+            consumerPost.Received += (model, ea) => {
                 var body = ea.Body.ToArray();
                 var message = Encoding.UTF8.GetString(body);
                 Movie movie = (Movie)JsonConvert.DeserializeObject(message);
@@ -63,10 +65,21 @@ namespace Movies.Services {
                 this.Observable.OnNext(movie);
                 this.Observable.OnCompleted();
             };
+            consumerGet.Received += (model, ea) => {
+                var body = ea.Body.ToArray();
+                var message = Encoding.UTF8.GetString(body);
+                List<Movie> movie = (List<Movie>)JsonConvert.DeserializeObject(message);
+                Console.WriteLine("movie inside callback --> ", message);
+                this.ObservableList.OnNext(movie);
+                this.ObservableList.OnCompleted();
+            };
 
             Channel.BasicConsume(queue: "post-response",
                                  autoAck: true,
-                                 consumer: consumer);
+                                 consumer: consumerPost);
+            Channel.BasicConsume(queue: "get-response",
+                                 autoAck: true,
+                                 consumer: consumerGet);
         }
     }
 }

@@ -36,7 +36,7 @@ namespace DatabaseIntegration.Services {
                                      arguments: null);
         }
 
-        public bool sendMessage(string channelName, Movie parameters) {
+        public bool sendMessage(string channelName, List<Movie> parameters) {
             try {
                 var json = JsonConvert.SerializeObject(parameters);
                 var body = Encoding.UTF8.GetBytes(json);
@@ -60,15 +60,17 @@ namespace DatabaseIntegration.Services {
                 var message = Encoding.UTF8.GetString(body);
                 Movie movie = (Movie)JsonConvert.DeserializeObject(message);
                 List<Movie> list = this.Movie.Get(movie.Id, movie.Title, movie.Categories[0]);
+                this.sendMessage("get-response", list);
             };
             Channel.BasicConsume(queue: "post",
                                  autoAck: true,
                                  consumer: consumerPost);
-            consumerGet.Received += (model, ea) => {
+            consumerGet.Received += async (model, ea) => {
                 var body = ea.Body.ToArray();
                 var message = Encoding.UTF8.GetString(body);
                 Movie movie = (Movie)JsonConvert.DeserializeObject(message);
-                this.Movie.setNewMovie(movie);
+                bool movieSetted = await this.Movie.setNewMovie(movie);
+                this.sendMessage("post-response", null);
             };
             Channel.BasicConsume(queue: "get",
                                  autoAck: true,
