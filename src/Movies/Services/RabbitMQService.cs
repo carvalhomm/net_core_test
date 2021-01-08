@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using System;
 using System.Text;
+using System.Reactive.Subjects;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -7,6 +9,7 @@ using Movies.Models;
 namespace Movies.Services {
     public class RabbitMQService {
         private IModel Channel;
+        public Subject<Movie> Observable;
         public RabbitMQService() {
             var factory = new ConnectionFactory() { HostName = "localhost" };
             var connection = factory.CreateConnection();
@@ -31,6 +34,7 @@ namespace Movies.Services {
                                      exclusive: false,
                                      autoDelete: false,
                                      arguments: null);
+            this.listenToChannelPost();
         }
 
         public bool sendMessage(string channelName, Movie parameters) {
@@ -54,7 +58,12 @@ namespace Movies.Services {
             consumer.Received += (model, ea) => {
                 var body = ea.Body.ToArray();
                 var message = Encoding.UTF8.GetString(body);
+                Movie movie = (Movie)JsonConvert.DeserializeObject(message);
+                Console.WriteLine("movie inside callback --> ", message);
+                this.Observable.OnNext(movie);
+                this.Observable.OnCompleted();
             };
+
             Channel.BasicConsume(queue: "post-response",
                                  autoAck: true,
                                  consumer: consumer);

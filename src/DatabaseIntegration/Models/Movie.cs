@@ -9,6 +9,6 @@ namespace DatabaseIntegration.Models {
         public DateTime LaunchedAt { get; set; }
         public decimal Budget { get; set; }
 
-        public ICollection<string> Categories { get; set; }
+        public IList<string> Categories { get; set; }
     }
 }

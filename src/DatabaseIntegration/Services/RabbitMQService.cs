@@ -1,13 +1,16 @@
+using System.Collections.Generic;
 using System;
 using System.Text;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using DatabaseIntegration.Models;
-namespace Movies.Services {
+namespace DatabaseIntegration.Services {
     public class RabbitMQService {
         private IModel Channel;
+        private MovieService Movie;
         public RabbitMQService() {
+            this.Movie = new MovieService(null);
             var factory = new ConnectionFactory() { HostName = "localhost" };
             var connection = factory.CreateConnection();
             this.Channel = connection.CreateModel();
@@ -49,15 +52,27 @@ namespace Movies.Services {
             }
         }
 
-        public void listenToChannelPost() {
-            var consumer = new EventingBasicConsumer(this.Channel);
-            consumer.Received += (model, ea) => {
+        public void listenToChannels() {
+            var consumerPost = new EventingBasicConsumer(this.Channel);
+            var consumerGet = new EventingBasicConsumer(this.Channel);
+            consumerPost.Received += (model, ea) => {
                 var body = ea.Body.ToArray();
                 var message = Encoding.UTF8.GetString(body);
+                Movie movie = (Movie)JsonConvert.DeserializeObject(message);
+                List<Movie> list = this.Movie.Get(movie.Id, movie.Title, movie.Categories[0]);
             };
-            Channel.BasicConsume(queue: "post-response",
+            Channel.BasicConsume(queue: "post",
                                  autoAck: true,
-                                 consumer: consumer);
+                                 consumer: consumerPost);
+            consumerGet.Received += (model, ea) => {
+                var body = ea.Body.ToArray();
+                var message = Encoding.UTF8.GetString(body);
+                Movie movie = (Movie)JsonConvert.DeserializeObject(message);
+                this.Movie.setNewMovie(movie);
+            };
+            Channel.BasicConsume(queue: "get",
+                                 autoAck: true,
+                                 consumer: consumerGet);
         }
     }
 }

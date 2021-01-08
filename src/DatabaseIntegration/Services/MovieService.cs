@@ -6,27 +6,27 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using DatabaseIntegration.Models;
 
-namespace DatabaseIntegration.Controllers {
-    public class MovieController {
+namespace DatabaseIntegration.Services {
+    public class MovieService {
 
-        private readonly ILogger<MovieController> _logger;
+        private readonly ILogger<MovieService> _logger;
         private readonly MovieContext MovieContext = new MovieContext(null);
 
-        public MovieController(ILogger<MovieController> logger) {
+        public MovieService(ILogger<MovieService> logger) {
             _logger = logger;
         }
 
-        public async Task<List<Movie>> Get([FromQuery(Name = "id")] string id, [FromQuery(Name = "name")] string name, [FromQuery(Name = "category")] string category) {
-            await this.MovieContext.Movie.FindAsync();
+        public async List<Movie> Get([FromQuery(Name = "id")] string id, [FromQuery(Name = "name")] string name, [FromQuery(Name = "category")] string category) {
+            List<Movie> listMovies = new List<Movie>();
             var movies = from movie in this.MovieContext.Movie select movie;
             if (!String.IsNullOrEmpty(id)) {
-                movies.Where(search => search.Id == id);
+                listMovies = movies.Where(search => search.Id == id).ToList();
             } else if (!String.IsNullOrEmpty(name)) {
-
+                listMovies = movies.Where(search => search.Title == name).ToList();
             } else if (!String.IsNullOrEmpty(category)) {
-
+                listMovies = movies.Where(search => search.Categories[0] == category).ToList();
             }
-            return movies.ToList();
+            return listMovies;
         }
 
         public async Task<bool> setNewMovie([FromBody] Movie request) {

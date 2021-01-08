@@ -43,11 +43,16 @@ namespace DatabaseIntegration.Controllers {
         }
 
         [HttpPost("insertMovie")]
-        public async Task<bool> setNewMovie([FromBody] Movie request) {
+        public async Task<IDisposable> setNewMovie([FromBody] Movie request) {
             if (request != null) {
                 this.Messager.sendMessage("post", request);
+                IDisposable movieSubs = this.Messager.Observable.Subscribe(movie => {
+                    Console.WriteLine("chegou fdp --> ", movie);
+                });
+                Console.WriteLine("movie subs --> ", movieSubs);
+                return movieSubs;
             }
-            return false;
+            return null;
         }
     }
 }
